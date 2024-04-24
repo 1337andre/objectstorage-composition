@@ -1,0 +1,109 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: x-s3s.crossplane.hansemerkur.de
+spec:
+  writeConnectionSecretsToNamespace: crossplane-system
+  compositeTypeRef:
+    apiVersion: crossplane.hansemerkur.de/v1alpha1
+    kind: X-S3
+  resources:
+    - name: bucket
+      base:
+        apiVersion: s3.aws.upbound.io/v1beta1
+        kind: Bucket
+        metadata:
+          name: mybucketname
+          labels:
+            testing.upbound.io/example-name: example
+        spec:
+          forProvider:
+            region: myregion
+      patches:
+        - fromFieldPath: "spec.bucketName"
+          toFieldPath: "metadata.name"
+        - fromFieldPath: "spec.region"
+          toFieldPath: "spec.forProvider.region"
+    - name: bucketPublicAccessBlock
+      base:
+        apiVersion: s3.aws.upbound.io/v1beta1
+        kind: BucketPublicAccessBlock
+        metadata:
+          annotations:
+            meta.upbound.io/example-id: s3/v1beta1/bucketpublicaccessblock
+          labels:
+            testing.upbound.io/example-name: example
+          name: example-bpab
+        spec:
+          forProvider:
+            blockPublicAcls: false
+            blockPublicPolicy: false
+            bucketRef: 
+              name: mybucketRef
+            region: myregion
+      patches:
+        - type: PatchSet
+          patchSetName: bucketNameAndRegionPatchSet
+    - name: bucketOwnershipControls
+      base: 
+        apiVersion: s3.aws.upbound.io/v1beta1
+        kind: BucketOwnershipControls
+        metadata:
+          name: example
+        spec:
+          forProvider:
+            bucketRef: 
+              name: mybucketRef
+            region: myregion
+            rule:
+              - objectOwnership: BucketOwnerPreferred
+      patches:
+        - type: PatchSet
+          patchSetName: bucketNameAndRegionPatchSet
+    - name: bucketACL
+      base: 
+        apiVersion: s3.aws.upbound.io/v1beta1
+        kind: BucketACL
+        metadata:
+          annotations:
+            meta.upbound.io/example-id: s3/v1beta1/bucketacl-canned
+          name: example
+        spec:
+          forProvider:
+            acl: public-read
+            bucketRef: 
+              name: mybucketRef
+            region: myregion
+      patches:
+        - type: PatchSet
+          patchSetName: bucketNameAndRegionPatchSet
+    - name: BucketWebsiteConfiguration
+      base: 
+        apiVersion: s3.aws.upbound.io/v1beta1
+        kind: BucketWebsiteConfiguration
+        metadata:
+          name: example
+        spec:
+          forProvider:
+            bucketRef: 
+              name: mybucketRef
+            errorDocument:
+              - key: error.html
+            indexDocument:
+              - suffix: index.html
+            region: myregion
+            routingRule:
+              - condition:
+                  - keyPrefixEquals: docs/
+                redirect:
+                  - replaceKeyPrefixWith: documents/
+      patches:
+        - type: PatchSet
+          patchSetName: bucketNameAndRegionPatchSet
+  patchSets:
+  - name: bucketNameAndRegionPatchSet
+    patches:
+    - fromFieldPath: "spec.region"
+      toFieldPath: "spec.forProvider.region"
+    - fromFieldPath: "spec.bucketName"
+      toFieldPath: "spec.forProvider.bucketRef.name"

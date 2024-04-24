@@ -1,0 +1,35 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: x-s3s.crossplane.hansemerkur.de
+spec:
+  group: crossplane.hansemerkur.de
+  names:
+    kind: X-S3
+    plural: x-s3s
+  claimNames:
+    kind: S3
+    plural: s3s
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              region:
+                type: string
+              bucketName:
+                type: string
+            required:
+            - region
+            - bucketName
+          status:
+            type: object
+            properties:
+              region:
+                type: string

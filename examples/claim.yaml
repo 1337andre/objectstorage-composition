@@ -1,0 +1,7 @@
+apiVersion: crossplane.hansemerkur.de/v1alpha1
+kind: S3
+metadata:
+  name: crossplane-training-0
+spec:
+  region: eu-central-1
+  bucketName: crossplane-training-0
